@@ -72,7 +72,13 @@ with st.expander("ℹ️ About This Application"):
 def segment_customers(input_data):
     """Predict customer segment"""
     if classifier is None:
-        return None, "Model not loaded"
+        error_info = {
+            "name": "Error",
+            "icon": "❌",
+            "description": "Model not loaded. Please check if classifier.pkl exists.",
+            "strategy": ""
+        }
+        return None, error_info
     
     try:
         df_input = pd.DataFrame([input_data])
@@ -106,12 +112,22 @@ def segment_customers(input_data):
         }
         
         cluster_num = prediction[0]
-        info = cluster_info.get(cluster_num, {"name": f"Cluster {cluster_num}", "icon": "⚪", 
-                                               "description": "Unknown", "strategy": "Standard approach"})
+        info = cluster_info.get(cluster_num, {
+            "name": f"Cluster {cluster_num}",
+            "icon": "⚪",
+            "description": "Unknown cluster",
+            "strategy": "Standard approach"
+        })
         
         return cluster_num, info
     except Exception as e:
-        return None, {"name": "Error", "icon": "❌", "description": str(e), "strategy": ""}
+        error_info = {
+            "name": "Error",
+            "icon": "❌",
+            "description": f"Prediction failed: {str(e)}",
+            "strategy": ""
+        }
+        return None, error_info
 
 def main():
     # Sidebar inputs
@@ -312,7 +328,19 @@ def main():
                     else:
                         st.write("💤 Low engagement - Needs activation")
             else:
-                st.error(f"❌ {cluster_info['description']}")
+                # Show detailed error information
+                st.error(f"❌ Prediction Error")
+                st.warning(f"**Details:** {cluster_info['description']}")
+                
+                with st.expander("🔧 Troubleshooting Tips"):
+                    st.markdown("""
+                    **Common Issues:**
+                    1. **Model file not found**: Make sure `classifier.pkl` is uploaded to your repository
+                    2. **Module import error**: Check that all packages in `requirements.txt` are installed
+                    3. **Feature mismatch**: The model expects exactly 23 features in a specific order
+                    
+                    **Need help?** Check the Streamlit Cloud logs for detailed error messages.
+                    """)
 
 # Footer
 st.markdown("---")
